@@ -1,4 +1,7 @@
 /**
+ * Original work Copyright 2017 Skymind Inc.
+ * Modified work Copyright 2017 hayanige
+ *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -65,17 +68,11 @@ public class MLPMnistSingleLayerExample {
       .regularization(true).l2(1e-4)
       .list()
       .layer(0, new DenseLayer.Builder() // create the first, input layer with xavier initialization
-          .nIn(numRows * numColumns)
-          .nOut(1000)
-          .activation(Activation.RELU)
-          .weightInit(WeightInit.XAVIER)
-          .build())
+          .nIn(numRows * numColumns).nOut(1000).activation(Activation.RELU)
+          .weightInit(WeightInit.XAVIER).build())
       .layer(1, new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD) // create hidden layer
-              .nIn(1000)
-              .nOut(outputNum)
-              .activation(Activation.SOFTMAX)
-              .weightInit(WeightInit.XAVIER)
-              .build())
+          .nIn(1000).nOut(outputNum).activation(Activation.SOFTMAX)
+          .weightInit(WeightInit.XAVIER).build())
       .pretrain(false).backprop(true) // use backpropagation to adjust weights
       .build();
 
