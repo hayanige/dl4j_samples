@@ -123,7 +123,7 @@ public class RegressionSumLoadCSV {
     DataSet trainings = trainingIterator.next();
 
     // load training labels
-    File labelFile = new File("src/main/resources/sum_training_labels.csvg");
+    File labelFile = new File("src/main/resources/sum_training_labels.csv");
     recordReader.initialize(new FileSplit(labelFile));
     DataSetIterator labelIterator = new RecordReaderDataSetIterator(
         recordReader, nSamples);
