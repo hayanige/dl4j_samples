@@ -17,3 +17,4 @@ target
 build
 dependency-reduced-pom.xml
 *.log
+*.zip
