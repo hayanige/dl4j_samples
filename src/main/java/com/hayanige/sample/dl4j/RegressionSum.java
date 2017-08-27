@@ -47,15 +47,13 @@ public class RegressionSum {
   public static final int iterations = 1;
   //  Number of epochs (full passes of the data)
   public static final int nEpochs = 2000;
-  //  How frequently should we plot the network output?
-  public static final int plotFrequency = 500;
   //  Number of data points
   public static final int nSamples = 1000;
   //  Batch size: i.e., each epoch has nSamples/batchSize parameter updates
   public static final int batchSize = 100;
   //  Network learning rate
   public static final double learningRate = 0.01;
-  // The range of the sample data, data in range (0-1 is sensitive for NN, you
+  // The range of the sample data, data in range (0-1) is sensitive for NN, you
   // can try other ranges and see how it effects the results. Also try changing
   // the range along with changing the activation function
   public static int MIN_RANGE = 0;
