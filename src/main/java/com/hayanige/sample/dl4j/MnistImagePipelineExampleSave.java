@@ -85,8 +85,6 @@ public class MnistImagePipelineExampleSave {
       model.fit(mnistTrain);
     }
 
-    log.info("Train model ....");
-
     log.info("Save trained model....");
 
     // where to save model
