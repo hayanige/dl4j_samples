@@ -54,9 +54,9 @@ public class RegressionChessSaveCSV {
   // Number of iterations per minibatch
   public static final int iterations = 1;
   //  Number of epochs (full passes of the data)
-  public static final int nEpochs = 1000;
+  public static final int nEpochs = 100;
   //  Number of data points
-  public static final int nSamples = 2451;
+  public static final int nSamples = 1000;
   //  Batch size: i.e., each epoch has nSamples/batchSize parameter updates
   public static final int batchSize = 100;
   //  Network learning rate
@@ -69,9 +69,9 @@ public class RegressionChessSaveCSV {
     DataSetIterator iterator = getTrainingData(batchSize, rng);
 
     // Create the network
-    int numInput = 66;
+    int numInput = 65;
     int numOutputs = 1;
-    int nHidden = 100000;
+    int nHidden = 10000;
     MultiLayerNetwork net = new MultiLayerNetwork(
       new NeuralNetConfiguration.Builder()
       .seed(seed)

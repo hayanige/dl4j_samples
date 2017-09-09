@@ -18,3 +18,4 @@ build
 dependency-reduced-pom.xml
 *.log
 *.zip
+*.csv
