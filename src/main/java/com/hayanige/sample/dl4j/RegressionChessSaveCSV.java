@@ -24,6 +24,11 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.datavec.api.records.reader.RecordReader;
 import org.datavec.api.records.reader.impl.csv.CSVRecordReader;
 import org.datavec.api.split.FileSplit;
@@ -55,17 +60,46 @@ public class RegressionChessSaveCSV {
   //  Random number generator seed, for reproducability
   public static final int seed = 12345;
   // Number of iterations per minibatch
-  public static final int iterations = 1;
+  public static int iterations = 1;
   //  Number of epochs (full passes of the data)
-  public static final int nEpochs = 1000;
+  public static int nEpochs = 1000;
   //  Number of data points
-  public static final int nSamples = 1000;
+  public static int nSamples = 1000;
   //  Batch size: i.e., each epoch has nSamples/batchSize parameter updates
-  public static final int batchSize = 100;
+  public static int batchSize = 100;
   //  Network learning rate
-  public static final double learningRate = 0.000001;
+  public static double learningRate = 0.000001;
 
   public static void main(String[] args) throws Exception {
+
+    Options opts = createOption();
+    CommandLine cli = new DefaultParser().parse(opts, args);
+
+    if (cli.hasOption("h")) {
+      HelpFormatter formatter = new HelpFormatter();
+      formatter.printHelp("score generator from fen", opts);
+      return;
+    }
+
+    if (cli.hasOption("i")) {
+      iterations = Integer.parseInt(cli.getOptionValue("i"));
+    }
+
+    if (cli.hasOption("e")) {
+      nEpochs = Integer.parseInt(cli.getOptionValue("e"));
+    }
+
+    if (cli.hasOption("s")) {
+      nSamples = Integer.parseInt(cli.getOptionValue("s"));
+    }
+
+    if (cli.hasOption("b")) {
+      batchSize = Integer.parseInt(cli.getOptionValue("b"));
+    }
+
+    if (cli.hasOption("l")) {
+      learningRate = Double.parseDouble(cli.getOptionValue("l"));
+    }
 
     // Generate the training data
     Random rng = new Random(seed);
@@ -153,5 +187,53 @@ public class RegressionChessSaveCSV {
     List<DataSet> listDs = dataSet.asList();
     Collections.shuffle(listDs, rand);
     return new ListDataSetIterator(listDs, batchSize);
+  }
+
+  private static Options createOption() {
+    Options result = new Options();
+
+    result.addOption(Option.builder("i")
+        .longOpt("iteration")
+        .desc("number of iterations")
+        .hasArg()
+        .build()
+    );
+
+    result.addOption(Option.builder("e")
+        .longOpt("epoch")
+        .desc("number of epochs")
+        .hasArg()
+        .build()
+    );
+
+    result.addOption(Option.builder("s")
+        .longOpt("sample")
+        .desc("number of samples")
+        .hasArg()
+        .build()
+    );
+
+    result.addOption(Option.builder("b")
+        .longOpt("batch")
+        .desc("number of batches")
+        .hasArg()
+        .build()
+    );
+
+    result.addOption(Option.builder("l")
+        .longOpt("learning")
+        .desc("learning rate")
+        .hasArg()
+        .build()
+    );
+
+    result.addOption(Option.builder("h")
+        .longOpt("help")
+        .desc("help")
+        .hasArg(false)
+        .build()
+    );
+
+    return result;
   }
 }
