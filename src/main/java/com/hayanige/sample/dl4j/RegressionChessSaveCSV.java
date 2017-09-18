@@ -27,6 +27,7 @@ import java.util.Random;
 import org.datavec.api.records.reader.RecordReader;
 import org.datavec.api.records.reader.impl.csv.CSVRecordReader;
 import org.datavec.api.split.FileSplit;
+import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
@@ -36,7 +37,9 @@ import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
-import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
+import org.deeplearning4j.ui.api.UIServer;
+import org.deeplearning4j.ui.stats.StatsListener;
+import org.deeplearning4j.ui.storage.InMemoryStatsStorage;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.dataset.DataSet;
@@ -54,7 +57,7 @@ public class RegressionChessSaveCSV {
   // Number of iterations per minibatch
   public static final int iterations = 1;
   //  Number of epochs (full passes of the data)
-  public static final int nEpochs = 100;
+  public static final int nEpochs = 1000;
   //  Number of data points
   public static final int nSamples = 1000;
   //  Batch size: i.e., each epoch has nSamples/batchSize parameter updates
@@ -88,15 +91,22 @@ public class RegressionChessSaveCSV {
       .pretrain(false).backprop(true).build()
     );
     net.init();
-    net.setListeners(new ScoreIterationListener(1));
 
-    // Train the network on the full data set, and evaluate in periodically
-    for (int i = 0; i < nEpochs; i++) {
-      iterator.reset();
-      net.fit(iterator);
-    }
+    // Initialize the user interface backend
+    UIServer uiServer = UIServer.getInstance();
 
-    log.info("Save trained model....");
+    // Configure where the network information (gradients, score vs. time etc)
+    // is to be stored. Here: store in memory.
+    // Alternative: new File StatsStorage(File), for saving and loading later
+    StatsStorage statsStorage = new InMemoryStatsStorage();
+
+    // Attatch the StatsStorage instance to the UI: this allows the contents of
+    // the StatsStorage to be visualized
+    uiServer.attach(statsStorage);
+
+    // Then add the StatsListener to collect this information from the network,
+    // as it trains
+    net.setListeners(new StatsListener(statsStorage));
 
     // where to save model
     File locationToSave = new File("trained_chess_model.zip");
@@ -104,7 +114,19 @@ public class RegressionChessSaveCSV {
     // boolean save Updater
     boolean saveUpdater = false;
 
+    // Train the network on the full data set, and evaluate in periodically
+    for (int i = 1; i <= nEpochs; i++) {
+      iterator.reset();
+      net.fit(iterator);
+      if (nEpochs % 10 == 0) {
+        log.info("Save trained model....");
+        ModelSerializer.writeModel(net, locationToSave, saveUpdater);
+      }
+    }
+
+    log.info("Save trained model....");
     ModelSerializer.writeModel(net, locationToSave, saveUpdater);
+    log.info("=== END ===");
   }
 
   private static DataSetIterator getTrainingData(int batchSize, Random rand)
