@@ -36,6 +36,7 @@ import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
+import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
@@ -55,7 +56,8 @@ import org.slf4j.LoggerFactory;
 
 public class RegressionChessSaveCSV {
 
-  private static Logger log = LoggerFactory.getLogger(RegressionChessSaveCSV.class);
+  private static Logger log = LoggerFactory
+      .getLogger(RegressionChessSaveCSV.class);
 
   //  Random number generator seed, for reproducability
   public static final int seed = 12345;
@@ -105,26 +107,36 @@ public class RegressionChessSaveCSV {
     Random rng = new Random(seed);
     DataSetIterator iterator = getTrainingData(batchSize, rng);
 
-    // Create the network
-    int numInput = 65;
-    int numOutputs = 1;
-    int nHidden = 10000;
-    MultiLayerNetwork net = new MultiLayerNetwork(
-      new NeuralNetConfiguration.Builder()
-      .seed(seed)
-      .iterations(iterations)
-      .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-      .learningRate(learningRate)
-      .weightInit(WeightInit.XAVIER)
-      .updater(Updater.NESTEROVS) // To configure: .updater(new Nesterovs(0.9))
-      .list()
-      .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
-        .activation(Activation.TANH).build())
-      .layer(1, new OutputLayer.Builder(LossFunction.MSE)
-        .activation(Activation.IDENTITY).nIn(nHidden).nOut(numOutputs).build())
-      .pretrain(false).backprop(true).build()
-    );
-    net.init();
+    // create neural network
+    File modelLocation = new File("trained_chess_model.zip");
+    MultiLayerNetwork net;
+
+    if (modelLocation.exists()) {
+      net = ModelSerializer.restoreMultiLayerNetwork(modelLocation);
+    } else {
+      // Create the network
+      int numInput = 65;
+      int numOutputs = 1;
+      int nHidden = 10000;
+      MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+          .seed(seed)
+          .iterations(iterations)
+          .optimizationAlgo(
+              OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+          .learningRate(learningRate)
+          .weightInit(WeightInit.XAVIER)
+          .updater(
+              Updater.NESTEROVS) // To configure: .updater(new Nesterovs(0.9))
+          .list()
+          .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
+              .activation(Activation.TANH).build())
+          .layer(1, new OutputLayer.Builder(LossFunction.MSE)
+              .activation(Activation.IDENTITY).nIn(nHidden).nOut(numOutputs)
+              .build())
+          .pretrain(false).backprop(true).build();
+      net = new MultiLayerNetwork(conf);
+      net.init();
+    }
 
     // Initialize the user interface backend
     UIServer uiServer = UIServer.getInstance();
@@ -142,9 +154,6 @@ public class RegressionChessSaveCSV {
     // as it trains
     net.setListeners(new StatsListener(statsStorage));
 
-    // where to save model
-    File locationToSave = new File("trained_chess_model.zip");
-
     // boolean save Updater
     boolean saveUpdater = false;
 
@@ -154,17 +163,17 @@ public class RegressionChessSaveCSV {
       net.fit(iterator);
       if (nEpochs % 10 == 0) {
         log.info("Save trained model....");
-        ModelSerializer.writeModel(net, locationToSave, saveUpdater);
+        ModelSerializer.writeModel(net, modelLocation, saveUpdater);
       }
     }
 
     log.info("Save trained model....");
-    ModelSerializer.writeModel(net, locationToSave, saveUpdater);
+    ModelSerializer.writeModel(net, modelLocation, saveUpdater);
     log.info("=== END ===");
   }
 
   private static DataSetIterator getTrainingData(int batchSize, Random rand)
-    throws Exception {
+      throws Exception {
 
     log.info("***** load data from csv *****");
     RecordReader recordReader = new CSVRecordReader(0, ",");
@@ -183,7 +192,8 @@ public class RegressionChessSaveCSV {
         recordReader, nSamples);
     DataSet labels = labelIterator.next();
 
-    DataSet dataSet = new DataSet(trainings.getFeatureMatrix(), labels.getFeatureMatrix());
+    DataSet dataSet = new DataSet(trainings.getFeatureMatrix(),
+        labels.getFeatureMatrix());
     List<DataSet> listDs = dataSet.asList();
     Collections.shuffle(listDs, rand);
     return new ListDataSetIterator(listDs, batchSize);
